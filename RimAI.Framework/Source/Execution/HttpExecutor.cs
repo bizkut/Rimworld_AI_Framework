@@ -32,7 +32,9 @@ namespace RimAI.Framework.Execution
         /// <returns>一个封装了成功时的 HttpResponseMessage 或失败时的错误信息的 Result 对象。</returns>
         public async Task<Result<HttpResponseMessage>> ExecuteAsync(HttpRequestMessage request, CancellationToken cancellationToken, bool isStreaming = false, RetryPolicy policy = null)
         {
-            policy ??= new RetryPolicy();
+            // Default per-attempt timeout follows the configured HTTP timeout (settings.HttpTimeoutSeconds),
+            // so slow reasoning models are not cut off at a hard-coded 30s.
+            policy ??= new RetryPolicy { PerRequestTimeout = _client.Timeout };
 
             // Pre-read content for cloning on retries. HttpRequestMessage.Content is a forward-only
             // stream that gets consumed by SendAsync, so we must save the bytes before the first send.

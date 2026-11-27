@@ -95,7 +95,17 @@ namespace RimAI.Framework.UI
 
         private async void HandleEmbeddingTest()
         {
-            if (string.IsNullOrWhiteSpace(_embeddingApiKeyBuffer))
+            var templateResult = FrameworkDI.SettingsManager.GetMergedEmbeddingConfig(settings.ActiveEmbeddingProviderId);
+            if (!templateResult.IsSuccess)
+            {
+                _embeddingTestStatusMessage = templateResult.Error;
+                Messages.Message(templateResult.Error, MessageTypeDefOf.NegativeEvent);
+                return;
+            }
+
+            // Local providers declare no auth header and need no API key.
+            bool requiresKey = !string.IsNullOrEmpty(templateResult.Value.Template.Http?.AuthHeader);
+            if (requiresKey && string.IsNullOrWhiteSpace(_embeddingApiKeyBuffer))
             {
                 _embeddingTestStatusMessage = "RimAI.ApiMissing";
                 Messages.Message("RimAI.CannotTestEmptyKey".Translate(), MessageTypeDefOf.CautionInput);
@@ -107,14 +117,6 @@ namespace RimAI.Framework.UI
 
             try
             {
-                var templateResult = FrameworkDI.SettingsManager.GetMergedEmbeddingConfig(settings.ActiveEmbeddingProviderId);
-                if (!templateResult.IsSuccess)
-                {
-                    _embeddingTestStatusMessage = templateResult.Error;
-                    Messages.Message(templateResult.Error, MessageTypeDefOf.NegativeEvent);
-                    return;
-                }
-
                 var template = templateResult.Value.Template;
 
                 var tempUserConfig = new EmbeddingUserConfig

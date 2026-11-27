@@ -69,6 +69,24 @@ namespace RimAI.Framework.Configuration
                     JsonMode = OpenAiJsonMode
                 }
             };
+            // Local OpenAI-compatible proxy (no auth). beam-free is a reasoning model, so it needs
+            // a large max_tokens budget or the reasoning consumes it and content comes back null.
+            yield return new ChatTemplate
+            {
+                ProviderName = "Local Proxy 8787",
+                ProviderUrl = "http://127.0.0.1:8787/v1",
+                Http = LocalHttpConfig,
+                ChatApi = new ChatApiConfig
+                {
+                    Endpoint = "http://127.0.0.1:8787/v1/chat/completions",
+                    DefaultModel = "beam-free",
+                    DefaultParameters = JObject.FromObject(new { temperature = 0.7, top_p = 1.0, max_tokens = 4096 }),
+                    RequestPaths = OpenAiChatRequestPathsNoTypicalP,
+                    ResponsePaths = OpenAiChatResponsePaths,
+                    ToolPaths = OpenAiToolPaths,
+                    JsonMode = OpenAiJsonMode
+                }
+            };
             yield return new ChatTemplate
             {
                 ProviderName = "Ollama",
@@ -250,6 +268,22 @@ namespace RimAI.Framework.Configuration
                     Endpoint = "http://localhost:8080/v1/embeddings",
                     DefaultModel = "default-embedding-model",
                     MaxBatchSize = 512,
+                    RequestPaths = OpenAiEmbeddingRequestPaths,
+                    ResponsePaths = OpenAiEmbeddingResponsePaths
+                }
+            };
+            // Same ProviderName as the chat template so the chat→embedding provider sync matches.
+            // qwen3-embedding-8b: best EN/ZH cross-lingual matching and cheapest on the proxy.
+            yield return new EmbeddingTemplate
+            {
+                ProviderName = "Local Proxy 8787",
+                ProviderUrl = "http://127.0.0.1:8787/v1",
+                Http = LocalHttpConfig,
+                EmbeddingApi = new EmbeddingApiConfig
+                {
+                    Endpoint = "http://127.0.0.1:8787/v1/embeddings",
+                    DefaultModel = "qwen3-embedding-8b",
+                    MaxBatchSize = 128,
                     RequestPaths = OpenAiEmbeddingRequestPaths,
                     ResponsePaths = OpenAiEmbeddingResponsePaths
                 }
