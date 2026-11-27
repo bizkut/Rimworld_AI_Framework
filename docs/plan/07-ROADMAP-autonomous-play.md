@@ -96,18 +96,18 @@ Source analysis: `docs/research/rimmind-context.md`, `rimmind-actions.md`, `rimm
 
 | Pattern | RimMind source | Milestone | Why |
 |---|---|---|---|
-| Priority-protected token trim (core section untrimmable, numeric tiers) | Core `PromptBudget` | M1 | Holds the snapshot ≤ 5.5K tokens without cutting threats/starving pawns |
-| `ConcurrentQueue` hand-off drained on main thread each tick | Core result/log queues | M1, M3 | Off-thread LLM results → game thread for EventBus and command queue |
-| Event aggregation (repeated job/event → one session entry) | Memory work sessions | M1 (EventBus), M5 | Stops repetitive events flooding prompts and memory |
-| Name-keyed `Dictionary<string, ICommandHandler>` registry + `RiskLevel` per handler | Actions `IActionRule`, `RimMindActionsAPI` | M2 | Extensible whitelist; risk tier drives guardrails |
-| `[DebugAction]` per command, startup-registered | Actions debug actions | M2 | Dev harness for the scripted no-LLM exit test (G-28) |
-| `ExecuteBatch`: first step interrupts, rest queue on the same pawn | Actions `ExecuteBatch` | M2 | Multi-step orders (draft → move → attack) |
-| Request expiry (`ExpireAtTicks`) | Core request queue | M3 | Drop reactive answers that arrive after the event ended |
-| Per-action player enable/disable in ModSettings | Actions settings | M2 (data), M6 (UI) | Player can forbid destructive commands |
-| Per-event-type importance heuristics | Memory | M5 | Seed `Episode.Importance` before LLM scoring |
-| Pinned entries immune to decay/eviction | Memory `isPinned` | M5 | Persist strategic goals |
-| Daily LLM compression into long-term impressions | Memory "dark" tier | M5 | Long history at low token cost — **append-only** (RimMind overwrites) |
-| Deterministic jitter `Random(thingID ^ const)` | Memory | M5 | Stagger embedding/summary batches |
+| Priority-protected token trim (core section untrimmable, numeric tiers) | RimMind-Core `PromptBudget` | M1 | Holds the snapshot ≤ 5.5K tokens without cutting threats/starving pawns |
+| `ConcurrentQueue` hand-off drained on main thread each tick | RimMind-Core result/log queues | M1, M3 | Off-thread LLM results → game thread for EventBus and command queue |
+| Event aggregation (repeated job/event → one session entry) | RimMind-Memory work sessions | M1 (EventBus), M5 | Stops repetitive events flooding prompts and memory |
+| Name-keyed `Dictionary<string, ICommandHandler>` registry + `RiskLevel` per handler | RimMind-Actions `IActionRule`, `RimMindActionsAPI` | M2 | Extensible whitelist; risk tier drives guardrails |
+| `[DebugAction]` per command, startup-registered | RimMind-Actions debug actions | M2 | Dev harness for the scripted no-LLM exit test (G-28) |
+| `ExecuteBatch`: first step interrupts, rest queue on the same pawn | RimMind-Actions `ExecuteBatch` | M2 | Multi-step orders (draft → move → attack) |
+| Request expiry (`ExpireAtTicks`) | RimMind-Core request queue | M3 | Drop reactive answers that arrive after the event ended |
+| Per-action player enable/disable in ModSettings | RimMind-Actions settings | M2 (data), M6 (UI) | Player can forbid destructive commands |
+| Per-event-type importance heuristics | RimMind-Memory | M5 | Seed `Episode.Importance` before LLM scoring |
+| Pinned entries immune to decay/eviction | RimMind-Memory `isPinned` | M5 | Persist strategic goals |
+| Daily LLM compression into long-term impressions | RimMind-Memory "dark" tier | M5 | Long history at low token cost — **append-only** (RimMind overwrites) |
+| Deterministic jitter `Random(thingID ^ const)` | RimMind-Memory | M5 | Stagger embedding/summary batches |
 
 Do **not** adopt: text-only context, bool action results, ad-hoc string parameter parsing, recency-only injection, unpersisted command queue, missing circuit breaker, fixed-cooldown retry without `Retry-After` (covered by F2 instead), coupling to a RimMind-Core equivalent.
 
