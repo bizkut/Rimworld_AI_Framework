@@ -46,6 +46,10 @@ Without a repeatable unattended game, no later exit test can be run.
 `UnifiedChatRequest` has no model/provider field; `ChatManager` always uses `ActiveChatProviderId` and that provider's model, so tiers cannot use different models. Add optional `Model` (and optional `ProviderId`) on the request, threaded through `MergedChatConfig` → translator; the cache key already includes `cfg.Model`, so it must read the effective (overridden) model. Null keeps current behaviour. Unit test translator + cache key.
 - **Exit:** two requests in one session hit two different models on 8787 (log shows both).
 
+### F2 — Framework gap: HTTP-status-aware retry (new, small; before M3 uses cloud models)
+`HttpExecutor.ExecuteAsync` returns `Success` for any HTTP status and retries only transport errors/timeouts; there is no 429/5xx retry and no `Retry-After` handling. Retry 429/502/503/504 with exponential backoff, honour `Retry-After` (seconds or HTTP date) capped by the policy, never retry other 4xx. Unit test with a fake handler.
+- **Exit:** a stub server returning 429 + `Retry-After: 2` then 200 yields one success after ≥ 2 s; a 400 is not retried.
+
 ### M1 — Perception · `raf-jo2`
 Spec: `01-perception.md` + `06` G-02/G-03/G-05/G-07.
 - Port Core's `SchedulerService`/`SchedulerGameComponent` pattern for main-thread reads; adapt its `World/Parts/*` readers into `ColonySnapshot` v2 (pawns, needs, health, resources, buildings, zones, bills, policies, factions, threats).
@@ -85,6 +89,26 @@ Spec: `05-orchestration.md`.
 - Batch runner over N seeds/storytellers using `run-colony.sh`; table of telemetry per run (survival days, deaths, wealth, research, tokens, cost).
 - Model matrix per tier on 8787 (e.g. reactive: a fast non-reasoning model vs `beam-free`; strategic: strongest available) — choose by survival-per-token, not by feel.
 - Regression gate: a prompt or code change must not lower median survival on the fixed seed set.
+
+## 2a. RimMind patterns to adopt (by milestone)
+Source analysis: `docs/research/rimmind-context.md`, `rimmind-actions.md`, `rimmind-memory.md`. MIT — copied code keeps an attribution header. Adopt the pattern, not the module: RimMind is text-only (no entity IDs), bool-only action results, recency-only memory — we keep our structured DTOs, `CommandResult`, and embedding retrieval.
+
+| Pattern | RimMind source | Milestone | Why |
+|---|---|---|---|
+| Priority-protected token trim (core section untrimmable, numeric tiers) | Core `PromptBudget` | M1 | Holds the snapshot ≤ 5.5K tokens without cutting threats/starving pawns |
+| `ConcurrentQueue` hand-off drained on main thread each tick | Core result/log queues | M1, M3 | Off-thread LLM results → game thread for EventBus and command queue |
+| Event aggregation (repeated job/event → one session entry) | Memory work sessions | M1 (EventBus), M5 | Stops repetitive events flooding prompts and memory |
+| Name-keyed `Dictionary<string, ICommandHandler>` registry + `RiskLevel` per handler | Actions `IActionRule`, `RimMindActionsAPI` | M2 | Extensible whitelist; risk tier drives guardrails |
+| `[DebugAction]` per command, startup-registered | Actions debug actions | M2 | Dev harness for the scripted no-LLM exit test (G-28) |
+| `ExecuteBatch`: first step interrupts, rest queue on the same pawn | Actions `ExecuteBatch` | M2 | Multi-step orders (draft → move → attack) |
+| Request expiry (`ExpireAtTicks`) | Core request queue | M3 | Drop reactive answers that arrive after the event ended |
+| Per-action player enable/disable in ModSettings | Actions settings | M2 (data), M6 (UI) | Player can forbid destructive commands |
+| Per-event-type importance heuristics | Memory | M5 | Seed `Episode.Importance` before LLM scoring |
+| Pinned entries immune to decay/eviction | Memory `isPinned` | M5 | Persist strategic goals |
+| Daily LLM compression into long-term impressions | Memory "dark" tier | M5 | Long history at low token cost — **append-only** (RimMind overwrites) |
+| Deterministic jitter `Random(thingID ^ const)` | Memory | M5 | Stagger embedding/summary batches |
+
+Do **not** adopt: text-only context, bool action results, ad-hoc string parameter parsing, recency-only injection, unpersisted command queue, missing circuit breaker, fixed-cooldown retry without `Retry-After` (covered by F2 instead), coupling to a RimMind-Core equivalent.
 
 ## 3. Cross-cutting rules
 - Threading, DTO-only cognition, schema-validated actions, budget cap, save compatibility: as `00` §3 — unchanged.
