@@ -35,6 +35,7 @@ graph LR
 
 ### T0 — Test bed (new; prerequisite for everything)
 Without a repeatable unattended game, no later exit test can be run.
+**Status: done.** `scripts/run-colony.sh DAYS TIMEOUT_MIN` (build failure is fatal) → Harmony + Framework + Agent → `-quicktest -rimai-autorun -rimai-days=N [-rimai-speed=…]` → daily `[RimAI.Agent] telemetry` lines → `RUN COMPLETE` → log in `.runs/`. Autorun overrides RimWorld's forced 1x speed when hostiles are present and keeps running with the window unfocused. `scripts/rimmind-trial.sh` reuses it to run the RimMind suite against a no-AI baseline (M7).
 - Install Harmony into `/Applications/RimWorld.app/Mods/` and order `brrainz.harmony` first in `ModsConfig.xml`.
 - Agent post-build deploy to `Mods/RimAI_Agent` (mirror the Framework's `PostBuild` target; honour `RIMWORLD_DIR`); load order Harmony → Framework → Agent.
 - Register `AgentGameComponent` (fixes the `GameComponentUpdate` that currently throws) with a heartbeat log line every in-game hour.

@@ -417,3 +417,4 @@ $RECYCLE.BIN/
 .dolt/
 *.db
 .beads-credential-key
+.runs/

@@ -1,3 +1,4 @@
+using RimAI.Agent.TestBed;
 using Verse;
 
 namespace RimAI.Agent
@@ -5,6 +6,7 @@ namespace RimAI.Agent
     /// <summary>
     /// Main-thread tick driver for the AI loop. Owns all layer singletons.
     /// Persisted state (cadence, budget, decision log) via ExposeData.
+    /// RimWorld instantiates every GameComponent subclass automatically, so this must never throw.
     /// </summary>
     public class AgentGameComponent : GameComponent
     {
@@ -12,6 +14,14 @@ namespace RimAI.Agent
 
         public override void GameComponentUpdate()
         {
+            RunControl.Update();
+        }
+
+        public override void GameComponentTick()
+        {
+            // T0 test bed: heartbeat, daily telemetry, unattended-run control.
+            RunControl.Tick(Find.TickManager.TicksGame);
+
             // TODO(impl): five-phase tick —
             //   1. Drain Events: dequeue PerceptionEvents from EventBus, filter CriticalLevel >= Medium for reactive
             //   2. Process Commands: call IActionExecutor.ExecutePendingCommands() to drain marshalled queue
@@ -20,7 +30,6 @@ namespace RimAI.Agent
             //   5. Feed Results: marshall continuations to main thread via LongEventHandler.ExecuteWhenFinished,
             //      push ActionCommand[] to queue, log, deduct budget
             //   Main-thread safety: phases 1-3 synchronous; phase 4 DTO-only; phase 5 posted back to main thread
-            throw new System.NotImplementedException();
         }
 
         public override void ExposeData()
@@ -36,12 +45,14 @@ namespace RimAI.Agent
 
         public override void FinalizeInit()
         {
+            base.FinalizeInit();
+            RunControl.OnGameStarted();
+
             // TODO(impl): wire up layers —
             //   Subscribe Memory.IMemoryLogger (IEventSink) to EventBus for event logging
             //   Restore cadence timers from deserialized ExposeData state
             //   Initialize ICadenceScheduler, IBudgetManager, ISafetyGuardrail singletons
             //   Wire IOrchestrator.Start() to begin the main loop
-            base.FinalizeInit();
         }
     }
 }

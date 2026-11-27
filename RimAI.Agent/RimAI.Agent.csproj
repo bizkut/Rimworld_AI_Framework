@@ -25,4 +25,26 @@
     <ProjectReference Include="..\RimAI.Framework.Contracts\RimAI.Framework.Contracts.csproj" />
   </ItemGroup>
 
+  <!-- Deploy to RimWorld/Mods/RimAI_Agent. Same RimWorld detection as RimAI.Framework; RIMWORLD_DIR overrides.
+       Only RimAI.Agent.dll ships: Contracts + Newtonsoft come from the RimAI Framework mod, Harmony from brrainz.harmony. -->
+  <Target Name="DeployMod" AfterTargets="Build">
+    <PropertyGroup>
+      <RimWorldDir Condition="$([MSBuild]::IsOSPlatform('Windows')) and Exists('C:\Program Files (x86)\Steam\steamapps\common\RimWorld')">C:\Program Files (x86)\Steam\steamapps\common\RimWorld</RimWorldDir>
+      <RimWorldDir Condition="$([MSBuild]::IsOSPlatform('Windows')) and Exists('D:\SteamLibrary\steamapps\common\RimWorld')">D:\SteamLibrary\steamapps\common\RimWorld</RimWorldDir>
+      <RimWorldDir Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Application Support/Steam/steamapps/common/RimWorld/RimWorldMac.app/</RimWorldDir>
+      <RimWorldDir Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(HOME)/.steam/steam/steamapps/common/RimWorld</RimWorldDir>
+      <RimWorldDir Condition="'$(RIMWORLD_DIR)' != ''">$(RIMWORLD_DIR)</RimWorldDir>
+      <AgentModDir>$(RimWorldDir)/Mods/RimAI_Agent</AgentModDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <AgentAboutFiles Include="About\**\*.*" />
+    </ItemGroup>
+    <RemoveDir Directories="$(AgentModDir)" />
+    <Copy SourceFiles="@(AgentAboutFiles)" DestinationFolder="$(AgentModDir)/About/%(RecursiveDir)" />
+    <Copy SourceFiles="loadFolders.xml" DestinationFolder="$(AgentModDir)" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AgentModDir)/Assemblies" />
+    <Copy SourceFiles="$(TargetDir)$(TargetName).pdb" DestinationFolder="$(AgentModDir)/Assemblies" Condition="Exists('$(TargetDir)$(TargetName).pdb')" />
+    <Message Text="RimAI Agent deployed to $(AgentModDir)" Importance="high" />
+  </Target>
+
 </Project>
