@@ -2,6 +2,7 @@
 
 **Status:** execution roadmap. Specs stay in `00`–`06` (`06` wins on conflicts); this file orders the work, fixes each milestone's exit test, and names what to reuse.
 **Goal:** start a colony, leave the keyboard, and the LLM keeps it alive and growing — drafting for raids, assigning work, building, researching — with no human input.
+**Direction (2026-11-27):** evaluating the RimMind suite as the base instead of building RimAI.Agent. RimMind work happens in the RimMind repos (fork `bizkut/RimWorld-RimMind-Mod-Core`, branch `autonomous-play`, script `script/playthrough-macos.sh`); this repo is frozen unless that evaluation fails.
 
 ## 1. Where we are (2026-11-27)
 
@@ -35,7 +36,7 @@ graph LR
 
 ### T0 — Test bed (new; prerequisite for everything)
 Without a repeatable unattended game, no later exit test can be run.
-**Status: done.** `scripts/run-colony.sh DAYS TIMEOUT_MIN` (build failure is fatal) → Harmony + Framework + Agent → `-quicktest -rimai-autorun -rimai-days=N [-rimai-speed=…]` → daily `[RimAI.Agent] telemetry` lines → `RUN COMPLETE` → log in `.runs/`. Autorun overrides RimWorld's forced 1x speed when hostiles are present and keeps running with the window unfocused. `scripts/rimmind-trial.sh` reuses it to run the RimMind suite against a no-AI baseline (M7).
+**Status: done** — 3-day exit run passed 2026-11-27 (no-AI baseline: 3 colonists, mood 0.50→0.25, 1 downed by day 3, 0 exceptions). `scripts/run-colony.sh DAYS TIMEOUT_MIN` (build failure is fatal) → Harmony + Framework + Agent → `-quicktest -rimai-autorun -rimai-days=N [-rimai-speed=…]` → daily `[RimAI.Agent] telemetry` lines → `RUN COMPLETE` → log in `.runs/`. Autorun overrides RimWorld's forced 1x speed when hostiles are present and keeps running with the window unfocused. `scripts/rimmind-trial.sh` reuses it to run the RimMind suite against a no-AI baseline (M7).
 - Install Harmony into `/Applications/RimWorld.app/Mods/` and order `brrainz.harmony` first in `ModsConfig.xml`.
 - Agent post-build deploy to `Mods/RimAI_Agent` (mirror the Framework's `PostBuild` target; honour `RIMWORLD_DIR`); load order Harmony → Framework → Agent.
 - Register `AgentGameComponent` (fixes the `GameComponentUpdate` that currently throws) with a heartbeat log line every in-game hour.
