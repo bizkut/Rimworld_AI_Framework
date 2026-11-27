@@ -13,7 +13,7 @@
 | Harmony | Needed by Agent (planned event hooks) — `../HarmonyRimWorld` has a 1.6 build; not installed in `Mods/`. |
 | Reuse sources (MIT, attribute) | `../Rimworld_AI_Core` (scheduler, ~30 world-data readers, tool registry) — see `docs/research/rimai-core.md`. RimMind (context trimming, action registry/risk tiers, memory tiers) — see `docs/research/rimmind-*.md`. Neither has colony-management actions or an autonomous loop. |
 | Audit `06` status | Already done in code: G-01 (`UsageInfo` + usage parsing in chat/embedding/stream translators), G-05 (Agent csproj `Lib.Harmony` 2.3.3; About.xml Harmony dependency + loadAfter), G-06 (`RimAI.Agent.Tests` with serialization + usage-parser tests; `raf-qx3` still needs a test run). Other gaps open. |
-| Beads | New items T0, F1, M7 below are **not yet filed** — `bd` is not installed on this machine. File them with deps M1/M2→T0, M3→F1, M7→M6. |
+| Beads | New items T0, F1, F2, M7 below are **not yet filed** — `bd` is not installed on this machine. File them with deps M1/M2→T0, M3→F1, M3→F2, M7→M6. |
 
 ## 2. Milestones
 
@@ -24,6 +24,7 @@ graph LR
   T0[T0 Test bed] --> M1[M1 Perception]
   T0 --> M2[M2 Action core-12]
   F1[F1 Framework: per-request model] --> M3
+  F2[F2 Framework: 429/Retry-After retry] --> M3
   M1 --> M3[M3 Reactive loop]
   M2 --> M3
   M3 --> M4[M4 Tactical + construction]
